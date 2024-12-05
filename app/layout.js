@@ -7,7 +7,7 @@ import {
   Ticket, 
   Bus, 
   Users, 
-  Calendar,
+  HandCoins,
   Search,
   Bell,
   Menu,
@@ -22,11 +22,9 @@ const DashboardLayout = ({ children }) => {
   const pathname = usePathname();
 
   const navigationItems = [
-    { icon: BarChart3, label: 'Dashboard', href: '/' },
-    { icon: Ticket, label: 'Bilhetes', href: '/bilhetes' },
+    { icon: Ticket, label: 'Bilhetes', href: '/' },
     { icon: Bus, label: 'Rotas', href: '/rotas' },
-    { icon: Users, label: 'Passageiros', href: '/passageiros' },
-    { icon: Calendar, label: 'Horários', href: '/horarios' },
+    { icon: HandCoins, label: 'Finanças', href: '/financas' },
   ];
 
   const isCurrentPath = (path) => {
