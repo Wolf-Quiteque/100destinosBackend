@@ -26,7 +26,7 @@ const BookingsPage = () => {
         .from('bookings')
         .select('*')
         .order('created_at', { ascending: false });
-
+  
       if (data) {
         const parsedBookings = data.map(booking => ({
           ...booking,
@@ -37,16 +37,20 @@ const BookingsPage = () => {
             ? JSON.parse(booking.passenger_details)
             : booking.passenger_details
         }));
-        setBookings(parsedBookings);
+        setBookings(prevBookings => {
+          // Only update if there's a change to prevent unnecessary re-renders
+          const hasChanged = JSON.stringify(prevBookings) !== JSON.stringify(parsedBookings);
+          return hasChanged ? parsedBookings : prevBookings;
+        });
       }
       if (error) console.error('Error fetching bookings:', error);
     };
-
+  
     const fetchRoutes = async () => {
       const { data, error } = await supabase
         .from('bus_routes')
         .select('id, origin, destination');
-
+  
       if (data) {
         const routeMap = data.reduce((acc, route) => ({
           ...acc, 
@@ -56,24 +60,69 @@ const BookingsPage = () => {
       }
       if (error) console.error('Error fetching routes:', error);
     };
-
+  
+    // Initial fetch
     fetchBookings();
     fetchRoutes();
-
-    const bookingsSubscription = supabase
-      .channel('bookings')
+  
+    // Create a channel for realtime updates
+    const channel = supabase
+      .channel('bookings-changes')
       .on(
         'postgres_changes', 
         { event: '*', schema: 'public', table: 'bookings' },
-        fetchBookings
+        (payload) => {
+          switch(payload.eventType) {
+            case 'INSERT':
+              // Add new booking only if it's not already in the list
+              setBookings(prevBookings => {
+                const newBooking = {
+                  ...payload.new,
+                  passengers: typeof payload.new.passengers === 'string' 
+                    ? JSON.parse(payload.new.passengers) 
+                    : payload.new.passengers,
+                  passenger_details: typeof payload.new.passenger_details === 'string'
+                    ? JSON.parse(payload.new.passenger_details)
+                    : payload.new.passenger_details
+                };
+                const exists = prevBookings.some(booking => booking.id === newBooking.id);
+                return exists ? prevBookings : [newBooking, ...prevBookings];
+              });
+              break;
+            case 'DELETE':
+              // Remove deleted booking
+              setBookings(prevBookings => 
+                prevBookings.filter(booking => booking.id !== payload.old.id)
+              );
+              break;
+            case 'UPDATE':
+              // Update existing booking
+              setBookings(prevBookings => 
+                prevBookings.map(booking => 
+                  booking.id === payload.new.id 
+                    ? {
+                        ...payload.new,
+                        passengers: typeof payload.new.passengers === 'string' 
+                          ? JSON.parse(payload.new.passengers) 
+                          : payload.new.passengers,
+                        passenger_details: typeof payload.new.passenger_details === 'string'
+                          ? JSON.parse(payload.new.passenger_details)
+                          : payload.new.passenger_details
+                      }
+                    : booking
+                )
+              );
+              break;
+          }
+        }
       )
       .subscribe();
-
+  
+    // Cleanup subscription
     return () => {
-      supabase.removeChannel(bookingsSubscription);
+      supabase.removeChannel(channel);
     };
   }, []);
-
   useEffect(() => {
     const calculateStats = () => {
       setStats({
