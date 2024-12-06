@@ -158,7 +158,7 @@ const BookingsPage = () => {
         const idNumberMatch = passenger.idNumber === normalizedSearchTerm;
   
         // Exact match for ticket ID
-        const ticketIdMatch = passenger.ticketId.toLowerCase() === normalizedSearchTerm;
+        const ticketIdMatch = passenger.ticketId === normalizedSearchTerm;
   
         return nameMatch || idNumberMatch || ticketIdMatch;
       });
