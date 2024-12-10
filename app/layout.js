@@ -5,11 +5,12 @@ import React, { useState } from 'react';
 import { 
   BarChart3, 
   Ticket, 
-  Bus, 
+
   Users, 
   HandCoins,
   Search,
   Bell,
+  Bus,
   Menu,
   X,
   LogOut
@@ -25,6 +26,8 @@ const DashboardLayout = ({ children }) => {
     { icon: Ticket, label: 'Bilhetes', href: '/' },
     { icon: Bus, label: 'Rotas', href: '/rotas' },
     { icon: HandCoins, label: 'Finanças', href: '/financas' },
+    { icon: Bus, label: 'AutoCarros', href: '/assentos' },
+
   ];
 
   const isCurrentPath = (path) => {
