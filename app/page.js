@@ -144,38 +144,36 @@ const BookingsPage = () => {
     if (error) console.error('Error deleting booking:', error);
   };
 
-  const filteredBookings = useMemo(() => {
-    return bookings.filter(booking => {
-      // Normalize search term
+  const filteredBookings = useMemo(() => { 
+    return bookings.map(booking => {
+      const passengers = booking.passengers; // Parse JSONB if needed
+      return {
+        ...booking,
+        passengers: passengers.filter(passenger => {
+          const normalizedSearchTerm = searchTerm.trim();
+  
+          // Check if ticketId exists and match without case sensitivity
+          const nameMatch = passenger.name.toLowerCase().includes(normalizedSearchTerm.toLowerCase());
+          const idNumberMatch = passenger.idNumber === normalizedSearchTerm;
+          const ticketIdMatch = passenger.ticketId && passenger.ticketId.includes(normalizedSearchTerm);
+  
+          return nameMatch || idNumberMatch || ticketIdMatch;
+        })
+      };
+    }).filter(booking => {
       const normalizedSearchTerm = searchTerm.toLowerCase().trim();
-  
-      // Check if any passenger matches the search criteria
-      const passengerMatch = booking.passengers.some(passenger => {
-        // Match by name (partial or full)
-        const nameMatch = passenger.name.toLowerCase().includes(normalizedSearchTerm);
-  
-        // Exact match for ID number
-        const idNumberMatch = passenger.idNumber === normalizedSearchTerm;
-  
-        // Exact match for ticket ID
-        const ticketIdMatch = passenger.ticketId === normalizedSearchTerm;
-  
-        return nameMatch || idNumberMatch || ticketIdMatch;
-      });
-  
-      // Additional booking-level searches
       const bookingLevelMatch = 
         normalizedSearchTerm === "" || 
         booking.contact_phone?.toLowerCase().includes(normalizedSearchTerm) ||
         booking.contact_email?.toLowerCase().includes(normalizedSearchTerm) ||
         booking.id.toLowerCase().includes(normalizedSearchTerm);
-  
-      // Status filter
+      
       const matchesStatus = statusFilter === "" || booking.booking_status === statusFilter;
-  
-      return (passengerMatch || bookingLevelMatch) && matchesStatus;
+      
+      return (booking.passengers.length > 0 || bookingLevelMatch) && matchesStatus;
     });
   }, [bookings, searchTerm, statusFilter]);
+  
   const paginatedBookings = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredBookings.slice(startIndex, startIndex + ITEMS_PER_PAGE);

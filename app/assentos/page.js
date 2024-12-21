@@ -205,6 +205,7 @@ const PaginaRotasDisponiveis = () => {
                 className="cursor-pointer"
                 onClick={() => {
                   setRotaSelecionada(Rota.id);
+                  console.log(Rota)
                   setRota(Rota);
                   fetchSeatAvailability(Rota.id);
                 }}
