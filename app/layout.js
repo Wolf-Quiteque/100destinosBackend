@@ -12,18 +12,22 @@ import {
   Bell,
   Bus,
   Menu,
+  Building2,
   X,
   LogOut
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Toaster } from "@/components/ui/toaster"
 
 const DashboardLayout = ({ children }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const pathname = usePathname();
 
   const navigationItems = [
+   
     { icon: Ticket, label: 'Bilhetes', href: '/' },
+    { icon: Building2, label: 'Empresas', href: '/empresas' },
     { icon: Bus, label: 'Rotas', href: '/rotas' },
     { icon: HandCoins, label: 'Finanças', href: '/financas' },
     { icon: Bus, label: 'AutoCarros', href: '/assentos' },
@@ -132,7 +136,7 @@ const DashboardLayout = ({ children }) => {
           </div>
         </header>
         <main className="pt-20">
-          {children}
+        <Toaster>{children}</Toaster>  
         </main>
       </div>
     </div>

@@ -1,0 +1,221 @@
+'use client';
+import { useState, useEffect } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
+import { useToast } from "@/hooks/use-toast"
+
+
+const PAGE_SIZE = 5;
+
+export default function EmpresasPage() {
+  const supabase = createClientComponentClient();
+  const { toast } = useToast()
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [companies, setCompanies] = useState([]);
+  const [totalCompanies, setTotalCompanies] = useState(0);
+  const [newCompany, setNewCompany] = useState({
+    name: '',
+    contact_number: '',
+    logo: null,
+  });
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchCompanies();
+  }, [currentPage]);
+
+  const fetchCompanies = async () => {
+    setLoading(true);
+    try {
+      const { data, error, count } = await supabase
+        .from('bus_companies')
+        .select('*', { count: 'exact' })
+        .range((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE - 1)
+        .order('created_at', { ascending: false });
+        console.log(data)
+
+      if (error) throw error;
+      setCompanies(data || []);
+      setTotalCompanies(count || 0);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao carregar empresas',
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFileUpload = async (file) => {
+    const fileName = `${Date.now()}-${file.name}`;
+    const { data, error } = await supabase.storage
+      .from('company-logos')
+      .upload(fileName, file);
+
+    if (error) throw error;
+    return data.path;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      let logoUrl = null;
+      if (newCompany.logo) {
+        const path = await handleFileUpload(newCompany.logo);
+        logoUrl = supabase.storage.from('company-logos').getPublicUrl(path).data.publicUrl;
+      }
+
+      const { error } = await supabase
+        .from('bus_companies')
+        .insert([
+          {
+            name: newCompany.name,
+            contact_number: newCompany.contact_number,
+            logo_url: logoUrl,
+          },
+        ]);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Sucesso!',
+        description: 'Empresa adicionada com sucesso',
+        className: 'bg-orange-100 border-orange-300 text-orange-700',
+      });
+
+      setNewCompany({ name: '', contact_number: '', logo: null });
+      fetchCompanies();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao adicionar empresa',
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="container mx-auto p-4 space-y-6">
+      <Card className="border-orange-100">
+        <CardHeader>
+          <CardTitle className="text-orange-600">Gerenciar Empresas de Ônibus</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Input
+                placeholder="Nome da Empresa"
+                value={newCompany.name}
+                onChange={(e) =>
+                  setNewCompany({ ...newCompany, name: e.target.value })
+                }
+                required
+                className="border-orange-200 focus:ring-orange-500"
+              />
+              <Input
+                placeholder="Telefone de Contato"
+                value={newCompany.contact_number}
+                onChange={(e) =>
+                  setNewCompany({ ...newCompany, contact_number: e.target.value })
+                }
+                className="border-orange-200 focus:ring-orange-500"
+              />
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) =>
+                  setNewCompany({
+                    ...newCompany,
+                    logo: e.target.files?.[0] || null,
+                  })
+                }
+                className="border-orange-200 file:text-orange-600"
+              />
+            </div>
+            <Button
+              type="submit"
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+              disabled={loading}
+            >
+              {loading ? 'Adicionando...' : 'Adicionar Empresa'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      <Card className="border-orange-100">
+        <CardContent className="pt-6">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-orange-50">
+                <TableHead className="text-orange-600">Logo</TableHead>
+                <TableHead className="text-orange-600">Nome</TableHead>
+                <TableHead className="text-orange-600">Telefone</TableHead>
+                <TableHead className="text-orange-600">Data de Cadastro</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {companies.map((empresa) => (
+                <TableRow key={empresa.id}>
+                  <TableCell>
+                    {empresa.logo_url && (
+                      <img
+                        src={empresa.logo_url}
+                        alt="Logo"
+                        className="h-10 w-10 object-contain"
+                      />
+                    )}
+                  </TableCell>
+                  <TableCell>{empresa.name}</TableCell>
+                  <TableCell>{empresa.contact_number}</TableCell>
+                  <TableCell>
+                    {new Date(empresa.created_at).toLocaleDateString('pt-BR')}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <Pagination className="mt-4">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  className={currentPage === 1 ? 'text-gray-300' : 'text-orange-600'}
+                />
+              </PaginationItem>
+              <span className="px-4">
+                Página {currentPage} de {Math.ceil(totalCompanies / PAGE_SIZE)}
+              </span>
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  className={
+                    currentPage * PAGE_SIZE >= totalCompanies
+                      ? 'text-gray-300'
+                      : 'text-orange-600'
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
