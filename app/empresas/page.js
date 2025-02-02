@@ -14,14 +14,23 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
 import { useToast } from "@/hooks/use-toast"
-
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 const PAGE_SIZE = 5;
 
 export default function EmpresasPage() {
   const supabase = createClientComponentClient();
   const { toast } = useToast()
-
+  const [isGlowing, setIsGlowing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [companies, setCompanies] = useState([]);
   const [totalCompanies, setTotalCompanies] = useState(0);
@@ -31,6 +40,9 @@ export default function EmpresasPage() {
     logo: null,
   });
   const [loading, setLoading] = useState(false);
+  const [editingCompany, setEditingCompany] = useState(null);
+  const [deleteCompanyId, setDeleteCompanyId] = useState(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchCompanies();
@@ -44,7 +56,6 @@ export default function EmpresasPage() {
         .select('*', { count: 'exact' })
         .range((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE - 1)
         .order('created_at', { ascending: false });
-        console.log(data)
 
       if (error) throw error;
       setCompanies(data || []);
@@ -111,14 +122,97 @@ export default function EmpresasPage() {
     }
   };
 
+  const handleEdit = (company) => {
+    setEditingCompany(company);
+    setNewCompany({
+      name: company.name,
+      contact_number: company.contact_number,
+      logo: null,
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to the top
+    setIsGlowing(true); // Activate glow effect
+    setTimeout(() => setIsGlowing(false), 2000); // Disable glow after 2 seconds
+  };
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      let logoUrl = editingCompany.logo_url;
+      if (newCompany.logo) {
+        const path = await handleFileUpload(newCompany.logo);
+        logoUrl = supabase.storage.from('company-logos').getPublicUrl(path).data.publicUrl;
+      }
+
+      const { error } = await supabase
+        .from('bus_companies')
+        .update({
+          name: newCompany.name,
+          contact_number: newCompany.contact_number,
+          logo_url: logoUrl,
+        })
+        .eq('id', editingCompany.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Sucesso!',
+        description: 'Empresa atualizada com sucesso',
+        className: 'bg-orange-100 border-orange-300 text-orange-700',
+      });
+
+      setEditingCompany(null);
+      setNewCompany({ name: '', contact_number: '', logo: null });
+      fetchCompanies();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao atualizar empresa',
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('bus_companies')
+        .delete()
+        .eq('id', deleteCompanyId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Sucesso!',
+        description: 'Empresa deletada com sucesso',
+        className: 'bg-orange-100 border-orange-300 text-orange-700',
+      });
+
+      setDeleteCompanyId(null);
+      setIsDeleteDialogOpen(false);
+      fetchCompanies();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao deletar empresa',
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 space-y-6">
-      <Card className="border-orange-100">
+      <Card className={`border-orange-100 ${isGlowing ? 'glow-effect' : ''}`}>
         <CardHeader>
           <CardTitle className="text-orange-600">Gerenciar Empresas de Ônibus</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={editingCompany ? handleUpdate : handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Input
                 placeholder="Nome da Empresa"
@@ -154,8 +248,20 @@ export default function EmpresasPage() {
               className="bg-orange-600 hover:bg-orange-700 text-white"
               disabled={loading}
             >
-              {loading ? 'Adicionando...' : 'Adicionar Empresa'}
+              {loading ? (editingCompany ? 'Atualizando...' : 'Adicionando...') : (editingCompany ? 'Atualizar Empresa' : 'Adicionar Empresa')}
             </Button>
+            {editingCompany && (
+              <Button
+                type="button"
+                className="ml-2 bg-gray-600 hover:bg-gray-700 text-white"
+                onClick={() => {
+                  setEditingCompany(null);
+                  setNewCompany({ name: '', contact_number: '', logo: null });
+                }}
+              >
+                Cancelar Edição
+              </Button>
+            )}
           </form>
         </CardContent>
       </Card>
@@ -168,6 +274,7 @@ export default function EmpresasPage() {
                 <TableHead className="text-orange-600">Nome</TableHead>
                 <TableHead className="text-orange-600">Telefone</TableHead>
                 <TableHead className="text-orange-600">Data de Cadastro</TableHead>
+                <TableHead className="text-orange-600">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -186,6 +293,24 @@ export default function EmpresasPage() {
                   <TableCell>{empresa.contact_number}</TableCell>
                   <TableCell>
                     {new Date(empresa.created_at).toLocaleDateString('pt-BR')}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      className="mr-2"
+                      onClick={() => handleEdit(empresa)}
+                    >
+                      Editar
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        setDeleteCompanyId(empresa.id);
+                        setIsDeleteDialogOpen(true);
+                      }}
+                    >
+                      Deletar
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -216,6 +341,20 @@ export default function EmpresasPage() {
           </Pagination>
         </CardContent>
       </Card>
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Isso excluirá permanentemente a empresa.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Deletar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
   Menu,
   Building2,
   X,
+  Users2,
   LogOut
 } from 'lucide-react';
 import Link from 'next/link';
@@ -30,7 +31,8 @@ const DashboardLayout = ({ children }) => {
     { icon: Building2, label: 'Empresas', href: '/empresas' },
     { icon: Bus, label: 'Rotas', href: '/rotas' },
     { icon: HandCoins, label: 'Finanças', href: '/financas' },
-    { icon: Bus, label: 'AutoCarros', href: '/assentos' },
+    { icon: Bus, label: 'AutoCarros', href: '/autocarros' },
+    { icon: Users2, label: 'Funcionários', href: '/funcionarios' }
 
   ];
 
@@ -136,7 +138,7 @@ const DashboardLayout = ({ children }) => {
           </div>
         </header>
         <main className="pt-20">
-        <Toaster>{children}</Toaster>  
+        {children} <Toaster />
         </main>
       </div>
     </div>

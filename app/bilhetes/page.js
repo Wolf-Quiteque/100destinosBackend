@@ -21,7 +21,9 @@ const BookingsPage = () => {
   const ITEMS_PER_PAGE = 5;
 
   useEffect(() => {
+    console.log("try something else")
     const fetchBookings = async () => {
+      console.log("hello")
       const { data, error } = await supabase
         .from('bookings')
         .select('*')
