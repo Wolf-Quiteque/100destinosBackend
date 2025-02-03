@@ -106,37 +106,48 @@ export default function EmployeesPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+  
     try {
-      // Create user in Supabase Auth
+      // Create user in Supabase Auth with metadata
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: newEmployee.email,
         password: '100destinos2025', // Default password
+        options: {
+          data: {
+            name: newEmployee.name, // Save name in metadata
+            role: newEmployee.role, // Save role in metadata
+            company_id: newEmployee.company_id, // Save company_id in metadata
+          },
+        },
       });
-
+  
       if (authError) throw authError;
-
+  
       // Insert employee into the database
       const { error } = await supabase
         .from('employees')
-        .insert([{
-          name: newEmployee.name,
-          email: newEmployee.email,
-          address: newEmployee.address,
-          phone_number: newEmployee.phone_number,
-          id_number: newEmployee.id_number,
-          role: newEmployee.role,
-          company_id: newEmployee.company_id,
-          user_id: authData.user.id, // Link to Supabase Auth user
-        }]);
-
+        .insert([
+          {
+            name: newEmployee.name,
+            email: newEmployee.email,
+            address: newEmployee.address,
+            phone_number: newEmployee.phone_number,
+            id_number: newEmployee.id_number,
+            role: newEmployee.role,
+            company_id: newEmployee.company_id,
+            user_id: authData.user.id, // Link to Supabase Auth user
+          },
+        ]);
+  
       if (error) throw error;
-
+  
       toast({
         title: 'Sucesso!',
         description: 'Funcionário adicionado com sucesso',
         className: 'bg-orange-100 border-orange-300 text-orange-700',
       });
-
+  
+      // Reset form fields
       setNewEmployee({
         name: '',
         email: '',
@@ -146,6 +157,7 @@ export default function EmployeesPage() {
         role: '',
         company_id: '',
       });
+  
       setIsModalOpen(false);
       fetchEmployees();
     } catch (error) {
@@ -158,7 +170,6 @@ export default function EmployeesPage() {
       setLoading(false);
     }
   };
-
   const handleEdit = (employee) => {
     setEditingEmployee(employee);
     setNewEmployee({
