@@ -1,6 +1,8 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { PlusIcon } from 'lucide-react';
+import { SelectedCompanyContext } from '../context/SelectedCompanyContext';
 import {
   Table,
   TableBody,
@@ -24,10 +26,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 const PAGE_SIZE = 5;
 
 export default function EmpresasPage() {
+  const { selectedCompany, setSelectedCompany } = useContext(SelectedCompanyContext);
   const supabase = createClientComponentClient();
   const { toast } = useToast()
   const [isGlowing, setIsGlowing] = useState(false);
@@ -43,6 +52,8 @@ export default function EmpresasPage() {
   const [editingCompany, setEditingCompany] = useState(null);
   const [deleteCompanyId, setDeleteCompanyId] = useState(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [showActions, setShowActions] = useState({});
 
   useEffect(() => {
     fetchCompanies();
@@ -207,12 +218,131 @@ export default function EmpresasPage() {
 
   return (
     <div className="container mx-auto p-4 space-y-6">
-      <Card className={`border-orange-100 ${isGlowing ? 'glow-effect' : ''}`}>
-        <CardHeader>
-          <CardTitle className="text-orange-600">Gerenciar Empresas de Ônibus</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={editingCompany ? handleUpdate : handleSubmit} className="space-y-4">
+      <div className="flex justify-end">
+        <Button 
+          className="bg-orange-600 hover:bg-orange-700 text-white"
+          onClick={() => setIsAddModalOpen(true)}
+        >
+          <PlusIcon className="h-4 w-4 mr-2" />
+          Adicionar Empresa
+        </Button>
+      </div>
+      {selectedCompany && (
+        <div className="mb-4 p-4 bg-orange-50 border-b-2 border-green-500 flex justify-between items-center animate-pulse">
+          <div>
+            <h3 className="font-semibold text-green-600">Empresa Selecionada:</h3>
+            <p className="text-green-800 font-bold">{selectedCompany.name}</p>
+          </div>
+          <Button
+            variant="outline"
+            className="text-green-600 border-green-300 hover:bg-green-50"
+            onClick={() => setSelectedCompany(null)}
+          >
+            Limpar Seleção
+          </Button>
+        </div>
+      )}
+      <Card className="border-orange-100">
+        <CardContent className="pt-6">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-orange-50">
+                <TableHead className="text-orange-600">Logo</TableHead>
+                <TableHead className="text-orange-600">Nome</TableHead>
+                <TableHead className="text-orange-600">Telefone</TableHead>
+                <TableHead className="text-orange-600">Data de Cadastro</TableHead>
+                <TableHead className="text-orange-600">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {companies.map((empresa) => (
+                <TableRow 
+                  key={empresa.id}
+                  onClick={() => setSelectedCompany(empresa)}
+                  className={`cursor-pointer hover:bg-orange-50 ${
+                    selectedCompany?.id === empresa.id ? 'bg-orange-100' : ''
+                  }`}
+                >
+                  <TableCell>
+                    {empresa.logo_url && (
+                      <img
+                        src={empresa.logo_url}
+                        alt="Logo"
+                        className="h-10 w-10 object-contain"
+                      />
+                    )}
+                  </TableCell>
+                  <TableCell>{empresa.name}</TableCell>
+                  <TableCell>{empresa.contact_number}</TableCell>
+                  <TableCell>
+                    {new Date(empresa.created_at).toLocaleDateString('pt-BR')}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center">
+                      <Button
+                        variant="outline"
+                        className="mr-2"
+                        onClick={() => setShowActions(prev => ({...prev, [empresa.id]: !prev[empresa.id]}))}
+                      >
+                        Acções
+                      </Button>
+                      {showActions[empresa.id] && (
+                        <>
+                          <Button
+                            variant="outline"
+                            className="mr-2"
+                            onClick={() => handleEdit(empresa)}
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={() => {
+                              setDeleteCompanyId(empresa.id);
+                              setIsDeleteDialogOpen(true);
+                            }}
+                          >
+                            Deletar
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <Pagination className="mt-4">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  className={currentPage === 1 ? 'text-gray-300' : 'text-orange-600'}
+                />
+              </PaginationItem>
+              <span className="px-4">
+                Página {currentPage} de {Math.ceil(totalCompanies / PAGE_SIZE)}
+              </span>
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  className={
+                    currentPage * PAGE_SIZE >= totalCompanies
+                      ? 'text-gray-300'
+                      : 'text-orange-600'
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </CardContent>
+      </Card>
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adicionar Nova Empresa</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Input
                 placeholder="Nome da Empresa"
@@ -248,99 +378,12 @@ export default function EmpresasPage() {
               className="bg-orange-600 hover:bg-orange-700 text-white"
               disabled={loading}
             >
-              {loading ? (editingCompany ? 'Atualizando...' : 'Adicionando...') : (editingCompany ? 'Atualizar Empresa' : 'Adicionar Empresa')}
+              {loading ? 'Adicionando...' : 'Adicionar Empresa'}
             </Button>
-            {editingCompany && (
-              <Button
-                type="button"
-                className="ml-2 bg-gray-600 hover:bg-gray-700 text-white"
-                onClick={() => {
-                  setEditingCompany(null);
-                  setNewCompany({ name: '', contact_number: '', logo: null });
-                }}
-              >
-                Cancelar Edição
-              </Button>
-            )}
           </form>
-        </CardContent>
-      </Card>
-      <Card className="border-orange-100">
-        <CardContent className="pt-6">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-orange-50">
-                <TableHead className="text-orange-600">Logo</TableHead>
-                <TableHead className="text-orange-600">Nome</TableHead>
-                <TableHead className="text-orange-600">Telefone</TableHead>
-                <TableHead className="text-orange-600">Data de Cadastro</TableHead>
-                <TableHead className="text-orange-600">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {companies.map((empresa) => (
-                <TableRow key={empresa.id}>
-                  <TableCell>
-                    {empresa.logo_url && (
-                      <img
-                        src={empresa.logo_url}
-                        alt="Logo"
-                        className="h-10 w-10 object-contain"
-                      />
-                    )}
-                  </TableCell>
-                  <TableCell>{empresa.name}</TableCell>
-                  <TableCell>{empresa.contact_number}</TableCell>
-                  <TableCell>
-                    {new Date(empresa.created_at).toLocaleDateString('pt-BR')}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outline"
-                      className="mr-2"
-                      onClick={() => handleEdit(empresa)}
-                    >
-                      Editar
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={() => {
-                        setDeleteCompanyId(empresa.id);
-                        setIsDeleteDialogOpen(true);
-                      }}
-                    >
-                      Deletar
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <Pagination className="mt-4">
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  className={currentPage === 1 ? 'text-gray-300' : 'text-orange-600'}
-                />
-              </PaginationItem>
-              <span className="px-4">
-                Página {currentPage} de {Math.ceil(totalCompanies / PAGE_SIZE)}
-              </span>
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  className={
-                    currentPage * PAGE_SIZE >= totalCompanies
-                      ? 'text-gray-300'
-                      : 'text-orange-600'
-                  }
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

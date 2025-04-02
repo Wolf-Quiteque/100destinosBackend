@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { 
     BarChart3, 
     Ticket, 
@@ -8,9 +8,11 @@ import {
     Menu,
     X
   } from 'lucide-react';
+import { SelectedCompanyContext } from '../app/context/SelectedCompanyContext';
 
   
-function sidebar() {
+function Sidebar({ isSidebarOpen, toggleSidebar }) {
+  const { selectedCompany } = useContext(SelectedCompanyContext);
   return (
     <div className={`fixed left-0 h-full bg-orange-600 text-white transition-all duration-300 ease-in-out ${
         isSidebarOpen ? 'w-64' : 'w-20'
@@ -22,13 +24,20 @@ function sidebar() {
             }`}>
               TransBus
             </h1>
-            <button 
-              onClick={toggleSidebar}
-              className="p-2 hover:bg-orange-700 rounded-full"
-            >
-              {isSidebarOpen ? <X size={20} /> : <Menu color='black' size={20} />}
-            </button>
           </div>
+          {isSidebarOpen && (
+            <div className="mb-4">
+              <h2 className="text-center font-bold text-lg">
+                {selectedCompany?.name || 'Selecione uma empresa'}
+              </h2>
+            </div>
+          )}
+          <button 
+            onClick={toggleSidebar}
+            className="p-2 hover:bg-orange-700 rounded-full"
+          >
+            {isSidebarOpen ? <X size={20} /> : <Menu color='black' size={20} />}
+          </button>
           <nav>
             <ul className="space-y-2">
               <li>
@@ -88,4 +97,4 @@ function sidebar() {
   )
 }
 
-export default sidebar
+export default Sidebar

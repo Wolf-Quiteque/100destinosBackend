@@ -2,48 +2,88 @@
 import "./globals.css"
 
 import React, { useState } from 'react';
+import { SelectedCompanyProvider } from './context/SelectedCompanyContext';
 import { 
-  BarChart3, 
-  Ticket, 
-
-  Users, 
   HandCoins,
   Search,
   Bell,
-  Bus,
   Menu,
   Building2,
   X,
   Users2,
-  LogOut
+  LogOut,
+  Bus
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Toaster } from "@/components/ui/toaster"
 
-const DashboardLayout = ({ children }) => {
+import { useContext } from 'react';
+import { SelectedCompanyContext } from './context/SelectedCompanyContext';
+
+const CompanyNavigation = ({ isSidebarOpen }) => {
+  const { selectedCompany } = useContext(SelectedCompanyContext);
+  const pathname = usePathname();
+
+  const isCurrentPath = (path) => {
+    return pathname === path;
+  };
+
+  if (!selectedCompany) return null;
+
+  const items = [
+    { icon: Bus, label: 'Rotas', href: `/empresas/${selectedCompany.id}/rotas` },
+    { icon: Building2, label: 'Editar Info', href: `/empresas/${selectedCompany.id}/editar` },
+    { icon: Bus, label: 'Autocarros', href: `/empresas/${selectedCompany.id}/autocarros` },
+    { icon: Users2, label: 'Funcionários', href: `/empresas/${selectedCompany.id}/funcionarios` }
+  ];
+
+  return (
+    <div className="mt-4 border-t border-orange-500 pt-4">
+      {items.map((item) => {
+        const Icon = item.icon;
+        return (
+          <li key={item.href}>
+            <Link 
+              href={item.href}
+              className={`flex items-center p-3 rounded transition-colors duration-200 ${
+                isCurrentPath(item.href) 
+                  ? 'bg-orange-700' 
+                  : 'hover:bg-orange-700'
+              }`}
+            >
+              <Icon className="mr-3" size={20} />
+              <span className={`transition-opacity duration-300 ${
+                isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0'
+              }`}>
+                {item.label}
+              </span>
+            </Link>
+          </li>
+        );
+      })}
+    </div>
+  );
+};
+
+const RootLayout = ({ children }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const pathname = usePathname();
 
-  const navigationItems = [
-   
-    { icon: Ticket, label: 'Bilhetes', href: '/' },
+  const mainNavigationItems = [
     { icon: Building2, label: 'Empresas', href: '/empresas' },
-    { icon: Bus, label: 'Rotas', href: '/rotas' },
     { icon: HandCoins, label: 'Finanças', href: '/financas' },
-    { icon: Bus, label: 'AutoCarros', href: '/autocarros' },
     { icon: Users2, label: 'Funcionários', href: '/funcionarios' }
-
   ];
 
   const isCurrentPath = (path) => {
     return pathname === path;
   };
 
-  return ( <html lang="en">
-    <body
-    >
-     <div className="flex h-screen bg-gray-100">
+  return (
+    <html lang="en">
+      <body>
+        <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
       <div className={`fixed left-0 h-full bg-orange-600 text-white transition-all duration-300 ease-in-out z-20 ${
         isSidebarOpen ? 'w-64' : 'w-20'
@@ -64,7 +104,7 @@ const DashboardLayout = ({ children }) => {
           </div>
           <nav>
             <ul className="space-y-2">
-              {navigationItems.map((item) => {
+              {mainNavigationItems.map((item) => {
                 const Icon = item.icon;
                 return (
                   <li key={item.href}>
@@ -86,6 +126,7 @@ const DashboardLayout = ({ children }) => {
                   </li>
                 );
               })}
+              <CompanyNavigation isSidebarOpen={isSidebarOpen} />
             </ul>
           </nav>
 
@@ -141,10 +182,17 @@ const DashboardLayout = ({ children }) => {
         {children} <Toaster />
         </main>
       </div>
-    </div>
-    </body>
-  </html>
- 
+        </div>
+      </body>
+    </html>
+  );
+};
+
+const DashboardLayout = ({ children }) => {
+  return (
+    <SelectedCompanyProvider>
+      <RootLayout>{children}</RootLayout>
+    </SelectedCompanyProvider>
   );
 };
 
