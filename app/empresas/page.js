@@ -249,8 +249,6 @@ export default function EmpresasPage() {
               <TableRow className="bg-orange-50">
                 <TableHead className="text-orange-600">Logo</TableHead>
                 <TableHead className="text-orange-600">Nome</TableHead>
-                <TableHead className="text-orange-600">Telefone</TableHead>
-                <TableHead className="text-orange-600">Data de Cadastro</TableHead>
                 <TableHead className="text-orange-600">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -273,10 +271,6 @@ export default function EmpresasPage() {
                     )}
                   </TableCell>
                   <TableCell>{empresa.name}</TableCell>
-                  <TableCell>{empresa.contact_number}</TableCell>
-                  <TableCell>
-                    {new Date(empresa.created_at).toLocaleDateString('pt-BR')}
-                  </TableCell>
                   <TableCell>
                     <div className="flex items-center">
                       <Button

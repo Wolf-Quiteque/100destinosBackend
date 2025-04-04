@@ -12,7 +12,8 @@ import {
   X,
   Users2,
   LogOut,
-  Bus
+  Bus,
+  Ticket // Added Ticket icon
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -35,7 +36,9 @@ const CompanyNavigation = ({ isSidebarOpen }) => {
     { icon: Bus, label: 'Rotas', href: `/empresas/${selectedCompany.id}/rotas` },
     { icon: Building2, label: 'Editar Info', href: `/empresas/${selectedCompany.id}/editar` },
     { icon: Bus, label: 'Autocarros', href: `/empresas/${selectedCompany.id}/autocarros` },
-    { icon: Users2, label: 'Funcionários', href: `/empresas/${selectedCompany.id}/funcionarios` }
+    { icon: Users2, label: 'Funcionários', href: `/empresas/${selectedCompany.id}/funcionarios` },
+    { icon: HandCoins, label: 'Finanças', href: `/empresas/${selectedCompany.id}/financas` }, // Added Company Finances
+    { icon: Ticket, label: 'Bilhetes', href: `/empresas/${selectedCompany.id}/bilhetes` }      // Added Company Tickets
   ];
 
   return (
@@ -70,7 +73,9 @@ const RootLayout = ({ children }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const pathname = usePathname();
 
+  // Updated main navigation items order and added Bilhetes
   const mainNavigationItems = [
+    { icon: Ticket, label: 'Bilhetes', href: '/bilhetes' },
     { icon: Building2, label: 'Empresas', href: '/empresas' },
     { icon: HandCoins, label: 'Finanças', href: '/financas' },
     { icon: Users2, label: 'Funcionários', href: '/funcionarios' }
@@ -129,21 +134,6 @@ const RootLayout = ({ children }) => {
               <CompanyNavigation isSidebarOpen={isSidebarOpen} />
             </ul>
           </nav>
-
-          {/* Logout Button */}
-          <div className="absolute bottom-4 w-full left-0 px-4">
-            <button 
-              className="flex items-center p-3 hover:bg-orange-700 rounded w-full"
-              onClick={() => console.log('Logout clicked')}
-            >
-              <LogOut className="mr-3" size={20} />
-              <span className={`transition-opacity duration-300 ${
-                isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0'
-              }`}>
-                Sair
-              </span>
-            </button>
-          </div>
         </div>
       </div>
       <div className={`flex-1 transition-all duration-300 ${
@@ -169,11 +159,19 @@ const RootLayout = ({ children }) => {
               </button>
               <div className="ml-4 flex items-center">
                 <img
-                  src="/api/placeholder/32/32"
+                  src="https://picsum.photos/32" // Updated placeholder image
                   alt="Profile"
                   className="w-8 h-8 rounded-full"
                 />
                 <span className="ml-2 font-medium">Admin</span>
+                {/* Moved Logout Button Here */}
+                <button 
+                  className="ml-4 p-2 hover:bg-gray-100 rounded-full"
+                  onClick={() => console.log('Logout clicked')}
+                  title="Sair" // Added title for accessibility
+                >
+                  <LogOut size={20} />
+                </button>
               </div>
             </div>
           </div>

@@ -1,10 +1,10 @@
-import React, { useContext } from 'react'
+import React, { useContext } from 'react';
+import Link from 'next/link'; // Import Link
 import { 
-    BarChart3, 
     Ticket, 
-    Bus, 
+    Building2, // Added for Empresas
+    DollarSign, // Added for Finanças
     Users, 
-    Calendar,
     Menu,
     X
   } from 'lucide-react';
@@ -40,56 +40,125 @@ function Sidebar({ isSidebarOpen, toggleSidebar }) {
           </button>
           <nav>
             <ul className="space-y-2">
+              {/* Bilhetes */}
               <li>
-                <a href="#" className="flex items-center p-3 bg-orange-700 rounded">
-                  <BarChart3 className="mr-3" size={20} />
-                  <span className={`transition-opacity duration-300 ${
-                    isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0'
-                  }`}>
-                    Dashboard
-                  </span>
-                </a>
-              </li>
-              <li>
-                <a href="#" className="flex items-center p-3 hover:bg-orange-700 rounded">
+                <Link href="/bilhetes" className="flex items-center p-3 hover:bg-orange-700 rounded">
                   <Ticket className="mr-3" size={20} />
                   <span className={`transition-opacity duration-300 ${
                     isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0'
                   }`}>
                     Bilhetes
                   </span>
-                </a>
+                </Link>
               </li>
+              {/* Empresas */}
               <li>
-                <a href="#" className="flex items-center p-3 hover:bg-orange-700 rounded">
-                  <Bus className="mr-3" size={20} />
+                <Link href="/empresas" className="flex items-center p-3 hover:bg-orange-700 rounded">
+                  <Building2 className="mr-3" size={20} />
                   <span className={`transition-opacity duration-300 ${
                     isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0'
                   }`}>
-                    Rotas
+                    Empresas
                   </span>
-                </a>
+                </Link>
               </li>
+              {/* Finanças */}
               <li>
-                <a href="#" className="flex items-center p-3 hover:bg-orange-700 rounded">
+                <Link href="/financas" className="flex items-center p-3 hover:bg-orange-700 rounded">
+                  <DollarSign className="mr-3" size={20} />
+                  <span className={`transition-opacity duration-300 ${
+                    isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0'
+                  }`}>
+                    Finanças
+                  </span>
+                </Link>
+              </li>
+              {/* Funcionarios */}
+              <li>
+                <Link href="/funcionarios" className="flex items-center p-3 hover:bg-orange-700 rounded">
                   <Users className="mr-3" size={20} />
                   <span className={`transition-opacity duration-300 ${
                     isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0'
                   }`}>
-                    Passageiros
+                    Funcionarios
                   </span>
-                </a>
+                </Link>
               </li>
-              <li>
-                <a href="#" className="flex items-center p-3 hover:bg-orange-700 rounded">
-                  <Calendar className="mr-3" size={20} />
-                  <span className={`transition-opacity duration-300 ${
-                    isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0'
-                  }`}>
-                    Horários
-                  </span>
-                </a>
-              </li>
+
+              {/* Company Specific Links - Conditionally Rendered */}
+              {selectedCompany && (
+                <>
+                  {/* Finanças (Empresa) */}
+                  <li>
+                    <Link href={`/empresas/${selectedCompany.id}/financas`} className="flex items-center p-3 hover:bg-orange-700 rounded">
+                      <DollarSign className="mr-3" size={20} />
+                      <span className={`transition-opacity duration-300 ${
+                        isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0'
+                      }`}>
+                        Finanças (Empresa)
+                      </span>
+                    </Link>
+                  </li>
+                  {/* Bilhetes (Empresa) */}
+                  <li>
+                    <Link href={`/empresas/${selectedCompany.id}/bilhetes`} className="flex items-center p-3 hover:bg-orange-700 rounded">
+                      <Ticket className="mr-3" size={20} />
+                      <span className={`transition-opacity duration-300 ${
+                        isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0'
+                      }`}>
+                        Bilhetes (Empresa)
+                      </span>
+                    </Link>
+                  </li>
+                   {/* Rotas (Empresa) */}
+                   <li>
+                    <Link href={`/empresas/${selectedCompany.id}/rotas`} className="flex items-center p-3 hover:bg-orange-700 rounded">
+                      {/* Assuming you have a Route icon or similar */}
+                      <svg xmlns="http://www.w3.org/2000/svg" className="mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg> 
+                      <span className={`transition-opacity duration-300 ${
+                        isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0'
+                      }`}>
+                        Rotas (Empresa)
+                      </span>
+                    </Link>
+                  </li>
+                   {/* Autocarros (Empresa) */}
+                   <li>
+                    <Link href={`/empresas/${selectedCompany.id}/autocarros`} className="flex items-center p-3 hover:bg-orange-700 rounded">
+                       {/* Assuming you have a Bus icon or similar */}
+                       <svg xmlns="http://www.w3.org/2000/svg" className="mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14v6m-3-3h6M6 10h2a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v2a2 2 0 002 2zm10 0h2a2 2 0 002-2V6a2 2 0 00-2-2h-2a2 2 0 00-2 2v2a2 2 0 002 2zM6 18h2a2 2 0 002-2v-2a2 2 0 00-2-2H6a2 2 0 00-2 2v2a2 2 0 002 2zm10 0h2a2 2 0 002-2v-2a2 2 0 00-2-2h-2a2 2 0 00-2 2v2a2 2 0 002 2z" /></svg>
+                      <span className={`transition-opacity duration-300 ${
+                        isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0'
+                      }`}>
+                        Autocarros (Empresa)
+                      </span>
+                    </Link>
+                  </li>
+                   {/* Funcionários (Empresa) */}
+                   <li>
+                    <Link href={`/empresas/${selectedCompany.id}/funcionarios`} className="flex items-center p-3 hover:bg-orange-700 rounded">
+                      <Users className="mr-3" size={20} />
+                      <span className={`transition-opacity duration-300 ${
+                        isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0'
+                      }`}>
+                        Funcionários (Empresa)
+                      </span>
+                    </Link>
+                  </li>
+                   {/* Editar (Empresa) */}
+                   <li>
+                    <Link href={`/empresas/${selectedCompany.id}/editar`} className="flex items-center p-3 hover:bg-orange-700 rounded">
+                       {/* Assuming you have an Edit icon or similar */}
+                       <svg xmlns="http://www.w3.org/2000/svg" className="mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                      <span className={`transition-opacity duration-300 ${
+                        isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0'
+                      }`}>
+                        Editar (Empresa)
+                      </span>
+                    </Link>
+                  </li>
+                </>
+              )}
             </ul>
           </nav>
         </div>

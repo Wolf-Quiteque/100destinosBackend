@@ -103,15 +103,15 @@ const BookingsPage = () => {
       const normalizedSearchTerm = searchTerm.toLowerCase().trim();
   
       // Check if any passenger matches the search criteria
-      const passengerMatch = booking.passengers.some(passenger => {
-        // Match by name (partial or full)
-        const nameMatch = passenger.name.toLowerCase().includes(normalizedSearchTerm);
+    const passengerMatch = booking.passengers.some(passenger => {
+      // Match by name (partial or full) - Added safety checks
+      const nameMatch = (passenger.name?.toLowerCase() ?? '').includes(normalizedSearchTerm);
   
-        // Exact match for ID number
-        const idNumberMatch = passenger.idNumber === normalizedSearchTerm;
+      // Exact match for ID number
+      const idNumberMatch = passenger.idNumber === normalizedSearchTerm;
   
-        // Exact match for ticket ID
-        const ticketIdMatch = passenger.ticketId.toLowerCase() === normalizedSearchTerm;
+      // Exact match for ticket ID - Added safety checks
+      const ticketIdMatch = (passenger.ticketId?.toLowerCase() ?? '') === normalizedSearchTerm;
   
         return nameMatch || idNumberMatch || ticketIdMatch;
       });
@@ -121,7 +121,7 @@ const BookingsPage = () => {
         normalizedSearchTerm === "" || 
         booking.contact_phone?.toLowerCase().includes(normalizedSearchTerm) ||
         booking.contact_email?.toLowerCase().includes(normalizedSearchTerm) ||
-        booking.id.toLowerCase().includes(normalizedSearchTerm);
+        (booking.id?.toLowerCase() ?? '').includes(normalizedSearchTerm); // Added safety check for booking.id
   
       // Status filter
       const matchesStatus = statusFilter === "" || booking.booking_status === statusFilter;
